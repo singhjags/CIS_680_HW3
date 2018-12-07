@@ -122,7 +122,7 @@ class VAE(nn.Module):
     def reparameterize(self, mu, logvar):
         std = logvar.mul(0.5).exp_()
         # return torch.normal(mu, std)
-        esp = torch.randn(*mu.size())
+        esp = torch.randn(*mu.size()).cuda()
         z = mu + std * esp
         return z
     
@@ -192,11 +192,11 @@ epochs = 20
 
 # In[ ]:
 
-
+itera = 0
 for epoch in range(epochs):
     for idx, (images, _) in enumerate(dataloader):
-        recon_images, mu, logvar = model(images)
-        loss, bce, kld = loss_fn(recon_images, images, mu, logvar)
+        recon_images, mu, logvar = model(images.cuda())
+        loss, bce, kld = loss_fn(recon_images, images.cuda(), mu, logvar)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -204,6 +204,12 @@ for epoch in range(epochs):
         to_print = "Epoch[{}/{}] Loss: {:.3f} {:.3f} {:.3f}".format(epoch+1, 
                                 epochs, loss.data[0]/bs, bce.data[0]/bs, kld.data[0]/bs)
         print(to_print)
+        if itera%10 == 0:
+            n = min(images.size(0), 8)
+            comparison = torch.cat([images[:n],
+                                          recon_images[:n]])
+            save_image(comparison.data.cpu(),
+                         './reconstructed/reconstruction_' + str(epoch) + '.png', nrow=n)
 
 # # notify to android when finished training
 # notify(to_print, priority=1)
