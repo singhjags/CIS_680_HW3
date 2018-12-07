@@ -23,8 +23,8 @@ from random import randint
 from IPython.display import Image
 from IPython.core.display import Image, display
 import pdb
-get_ipython().run_line_magic('load_ext', 'autoreload')
-get_ipython().run_line_magic('autoreload', '2')
+# get_ipython().run_line_magic('load_ext', 'autoreload')
+# get_ipython().run_line_magic('autoreload', '2')
 
 
 # In[2]:
@@ -32,7 +32,7 @@ get_ipython().run_line_magic('autoreload', '2')
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device
+print(device)
 
 
 # In[3]:
@@ -45,12 +45,12 @@ bs = 128
 
 
 # Load Data
-dataset = datasets.ImageFolder(root='/Users/jagtarsingh/Documents/celeba', transform=transforms.Compose([
+dataset = datasets.ImageFolder(root='/home/jagtar_singh_upenn/CIS_680_HW3/celeba', transform=transforms.Compose([
     transforms.Resize(64),
     transforms.ToTensor(), 
 ]))
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=bs, shuffle=True)
-len(dataset.imgs), len(dataloader)
+print(len(dataset.imgs), len(dataloader))
 
 
 # In[5]:
