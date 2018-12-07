@@ -87,14 +87,19 @@ class VAE(nn.Module):
         super(VAE, self).__init__()
         self.encoder = nn.Sequential(
             nn.Conv2d(image_channels, 32, kernel_size=3, stride=2),
+            nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=3, stride=2),
+            nn.BatchNorm2d(64),
             nn.ReLU(),
             nn.Conv2d(64, 128, kernel_size=3, stride=2),
+            nn.BatchNorm2d(128),
             nn.ReLU(),
             nn.Conv2d(128, 256, kernel_size=3, stride=2),
+            nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256, 512, kernel_size=3, stride=2),
+            nn.BatchNorm2d(512),
             nn.ReLU(),
 #             nn.Conv2d(512, 1024, kernel_size=3, stride=2),
 #             nn.ReLU(),
@@ -195,6 +200,7 @@ epochs = 20
 itera = 0
 for epoch in range(epochs):
     for idx, (images, _) in enumerate(dataloader):
+        itera+=1
         recon_images, mu, logvar = model(images.cuda())
         loss, bce, kld = loss_fn(recon_images, images.cuda(), mu, logvar)
         optimizer.zero_grad()
@@ -204,7 +210,7 @@ for epoch in range(epochs):
         to_print = "Epoch[{}/{}] Loss: {:.3f} {:.3f} {:.3f}".format(epoch+1, 
                                 epochs, loss.data[0]/bs, bce.data[0]/bs, kld.data[0]/bs)
         print(to_print)
-        if itera%10 == 0:
+        if itera%1000 == 0:
             n = min(images.size(0), 8)
             comparison = torch.cat([images.cuda()[:n],
                                           recon_images[:n]])
