@@ -206,7 +206,7 @@ for epoch in range(epochs):
         print(to_print)
         if itera%10 == 0:
             n = min(images.size(0), 8)
-            comparison = torch.cat([images[:n],
+            comparison = torch.cat([images.cuda()[:n],
                                           recon_images[:n]])
             save_image(comparison.data.cpu(),
                          './reconstructed/reconstruction_' + str(epoch) + '.png', nrow=n)
