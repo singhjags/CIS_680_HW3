@@ -168,7 +168,7 @@ for epoch in range(epochs):
         itera+=1
         recon_images, mu, log_sig = model(images.cuda())
         loss, recon_loss, kl_div_loss = loss_fn(recon_images, images.cuda(), mu, log_sig)
-        loss_all.append(loss)
+        loss_all.append(loss.data[0]/bs)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
@@ -181,7 +181,7 @@ for epoch in range(epochs):
                                           recon_images[:n]])
             save_image(comparison.data.cpu(),
                          './reconstructed/reconstruction_' + str(epoch) + '.png', nrow=n)
-            print("Epoch[{}/{}] Loss: {:.3f} {:.3f} {:.3f}".format(epoch+1, 
+        print("Epoch[{}/{}] Loss: {:.3f} {:.3f} {:.3f}".format(epoch+1, 
                                 epochs, loss.data[0]/bs, recon_loss.data[0]/bs, kl_div_loss.data[0]/bs))
 
 
