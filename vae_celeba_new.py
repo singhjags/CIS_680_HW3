@@ -22,20 +22,15 @@ from torchvision import datasets
 from torchvision import transforms
 from torchvision.utils import save_image
 import torchvision.utils as vutils
-# from torchsummary import summary
 
-# from pushover import notify
-# from utils import makegif
 from random import randint
+from matplotlib import pyplot as plt
 
 from IPython.display import Image
 from IPython.core.display import Image, display
 import pdb
-# get_ipython().run_line_magic('load_ext', 'autoreload')
-# get_ipython().run_line_magic('autoreload', '2')
 
 
-# In[2]:
 
 
 # Device configuration
@@ -43,13 +38,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(device)
 
 
-# In[3]:
 
 
 bs = 128
 
-
-# In[4]:
 
 
 # Load Data
@@ -61,7 +53,7 @@ dataloader = torch.utils.data.DataLoader(dataset, batch_size=bs, shuffle=True)
 print(len(dataset.imgs), len(dataloader))
 
 
-# In[5]:
+
 
 
 # Fixed input for debugging
@@ -71,7 +63,6 @@ save_image(fixed_x, 'real_image.png')
 Image('real_image.png')
 
 
-# In[6]:
 
 
 class Flatten(nn.Module):
@@ -79,7 +70,7 @@ class Flatten(nn.Module):
         return input.view(input.size(0), -1)
 
 
-# In[7]:
+
 
 
 class UnFlatten(nn.Module):
@@ -87,7 +78,7 @@ class UnFlatten(nn.Module):
         return input.view(input.size(0), size, 1, 1)
 
 
-# In[8]:
+
 
 
 class VAE(nn.Module):
@@ -134,141 +125,121 @@ class VAE(nn.Module):
         
     def forward(self, x):
         h = self.encoder(x)
-        mu, logvar = self.fc1(h), self.fc2(h)
-        std = logvar.mul(0.5).exp_()
+        mu, log_sig = self.fc1(h), self.fc2(h)
+        std = log_sig.mul(0.5).exp_()
         esp = torch.randn(*mu.size()).cuda()
         z = mu + std * esp
         z = self.fc3(z)
         z = self.decoder(z)
-        return z, mu, logvar
+        return z, mu, log_sig
 
 
-# In[9]:
+
 
 
 image_channels = fixed_x.size(1)
 print(image_channels)
 
 
-# In[10]:
+
 
 
 model = VAE(image_channels=image_channels).to(device)
-# model.load_state_dict(torch.load('vae.torch', map_location='cpu'))
 
-
-# In[11]:
-
-
-# optimizer = torch.optim.Adam(model.parameters(), lr=1e-3) 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0002) 
 
+def loss_fn(recon_x, x, mu, log_sig):
+    recon_loss = F.binary_cross_entropy(recon_x, x, size_average=False)
+    # recon_loss = F.mse_loss(recon_x, x, size_average=False)
 
-# In[12]:
-
-
-def loss_fn(recon_x, x, mu, logvar):
-    BCE = F.binary_cross_entropy(recon_x, x, size_average=False)
-    # BCE = F.mse_loss(recon_x, x, size_average=False)
-
-    # see Appendix B from VAE paper:
-    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
+    
     # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-    KLD = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
+    KL_loss = -0.5 * torch.mean(1 + log_sig - mu.pow(2) - log_sig.exp())
 
-    return BCE + KLD, BCE, KLD
-
-
-# In[13]:
-
+    return recon_loss + KL_loss, recon_loss, KL_loss
 
 epochs = 20
 
 
-# In[ ]:
-
 itera = 0
+loss_all = []
 for epoch in range(epochs):
     for idx, (images, _) in enumerate(dataloader):
         itera+=1
-        recon_images, mu, logvar = model(images.cuda())
-        loss, bce, kld = loss_fn(recon_images, images.cuda(), mu, logvar)
+        recon_images, mu, log_sig = model(images.cuda())
+        loss, recon_loss, kl_div_loss = loss_fn(recon_images, images.cuda(), mu, log_sig)
+        loss_all.append(loss)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-        to_print = "Epoch[{}/{}] Loss: {:.3f} {:.3f} {:.3f}".format(epoch+1, 
-                                epochs, loss.data[0]/bs, bce.data[0]/bs, kld.data[0]/bs)
+        
         
         if itera%1000 == 0:
-            n = min(images.size(0), 8)
+            n = min(images.size(0), 16)
             comparison = torch.cat([images.cuda()[:n],
                                           recon_images[:n]])
             save_image(comparison.data.cpu(),
                          './reconstructed/reconstruction_' + str(epoch) + '.png', nrow=n)
-            print(to_print)
+            print("Epoch[{}/{}] Loss: {:.3f} {:.3f} {:.3f}".format(epoch+1, 
+                                epochs, loss.data[0]/bs, recon_loss.data[0]/bs, kl_div_loss.data[0]/bs))
 
-# # notify to android when finished training
-# notify(to_print, priority=1)
 
+plt.plot(loss_all)
+plt.imshow()
+plt.savefig('loss_plot.png')
 torch.save(model.state_dict(), 'vae.torch')
 
 
-# In[155]:
+# def compare(x):
+#     recon_x, _, _ = model(x)
+#     return torch.cat([x, recon_x])
 
 
-def compare(x):
-    recon_x, _, _ = model(x)
-    return torch.cat([x, recon_x])
+# def compare2(x):
+#     recon_x, _, _ = model(x)
+#     return recon_x
 
 
-# In[156]:
+# # In[186]:
 
 
-def compare2(x):
-    recon_x, _, _ = model(x)
-    return recon_x
+# # sample = torch.randn(bs, 1024)
+# # compare_x = vae.decoder(sample)
 
+# # fixed_x, _ = next(iter(dataloader))
+# # fixed_x = fixed_x[:8]
+# import pdb
+# real_img = dataset[randint(1, 150)][0].unsqueeze(0)
 
-# In[186]:
-
-
-# sample = torch.randn(bs, 1024)
-# compare_x = vae.decoder(sample)
-
-# fixed_x, _ = next(iter(dataloader))
-# fixed_x = fixed_x[:8]
-import pdb
-real_img = dataset[randint(1, 150)][0].unsqueeze(0)
-
-compare_x = compare2(real_img)
-for i in range(31):
+# compare_x = compare2(real_img)
+# for i in range(31):
     
-    fixed_x = dataset[randint(1, 150)][0].unsqueeze(0)
-#     pdb.set_trace()
-    real_img = torch.cat([real_img, fixed_x])
+#     fixed_x = dataset[randint(1, 150)][0].unsqueeze(0)
+# #     pdb.set_trace()
+#     real_img = torch.cat([real_img, fixed_x])
 
-    new_compare_x = compare2(fixed_x)
+#     new_compare_x = compare2(fixed_x)
     
-    compare_x = torch.cat([compare_x, new_compare_x])
+#     compare_x = torch.cat([compare_x, new_compare_x])
     
     
     
 
-save_image(compare_x.data.cpu(), 'fake_image.png')
-save_image(real_img.data.cpu(), 'real_image.png')
-print("Generated Images ")
-display(Image('fake_image.png', width=700, unconfined=True))
-print("Real Images ")
-display(Image('real_image.png', width=700, unconfined=True))
+# save_image(compare_x.data.cpu(), 'fake_image.png')
+# save_image(real_img.data.cpu(), 'real_image.png')
+# print("Generated Images ")
+# display(Image('fake_image.png', width=700, unconfined=True))
+# print("Real Images ")
+# display(Image('real_image.png', width=700, unconfined=True))
 
 
-# In[187]:
+# # In[187]:
 
 
-fixed_x = dataset[randint(2, 180)][0].unsqueeze(0)
-compare_x = compare(fixed_x)
+# fixed_x = dataset[randint(2, 180)][0].unsqueeze(0)
+# compare_x = compare(fixed_x)
 
-save_image(compare_x.data.cpu(), 'sample_image.png')
-display(Image('sample_image.png', width=700, unconfined=True))
+# save_image(compare_x.data.cpu(), 'sample_image.png')
+# display(Image('sample_image.png', width=700, unconfined=True))
 
