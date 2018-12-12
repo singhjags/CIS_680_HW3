@@ -194,7 +194,7 @@ plt.savefig('celeba_loss.png')
 torch.save(model.state_dict(), 'vae.torch')
 
 
-recon_images, _, _ = model(fixed_x.cuda())
+recon_images, _, _ = model(fixed_x)
 comparison = torch.cat([fixed_x[:],recon_images[:]])
 save_image(comparison.data.cpu(),
                          './reconstructed_celeba/reconstruction_last' + str(epoch) + '.png', nrow=n)
