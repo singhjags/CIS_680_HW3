@@ -7,9 +7,9 @@ Created on Tue Dec 11 21:13:46 2018
 """
 
 
-# coding: utf-8
 
-# In[1]:
+
+
 
 
 import torch
@@ -22,10 +22,11 @@ from torchvision import datasets
 from torchvision import transforms
 from torchvision.utils import save_image
 import torchvision.utils as vutils
-
+import matplotlib 
 from random import randint
 from matplotlib import pyplot as plt
 
+plt.switch_backend('agg')
 from IPython.display import Image
 from IPython.core.display import Image, display
 import pdb
@@ -82,10 +83,10 @@ class UnFlatten(nn.Module):
 
 
 class VAE(nn.Module):
-    def __init__(self, image_channels=3, h_dim=512, z_dim=64):
+    def __init__(self, channels=3, h_dim=512, z_dim=64):
         super(VAE, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(image_channels, 32, kernel_size=3, stride=2),
+            nn.Conv2d(channels, 32, kernel_size=3, stride=2),
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=3, stride=2),
@@ -119,7 +120,7 @@ class VAE(nn.Module):
             nn.ReLU(),
             nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2),
             nn.ReLU(),
-            nn.ConvTranspose2d(32, image_channels, kernel_size=6, stride=1),
+            nn.ConvTranspose2d(32, channels, kernel_size=6, stride=1),
             nn.Sigmoid(),
         )
         
@@ -137,14 +138,14 @@ class VAE(nn.Module):
 
 
 
-image_channels = fixed_x.size(1)
-print(image_channels)
+channels = fixed_x.size(1)
+print(channels)
 
 
 
 
 
-model = VAE(image_channels=image_channels).to(device)
+model = VAE(channels=channels).to(device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0002) 
 
@@ -158,7 +159,7 @@ def loss_fn(recon_x, x, mu, log_sig):
 
     return recon_loss + KL_loss, recon_loss, KL_loss
 
-epochs = 20
+epochs = 1
 
 
 itera = 0
@@ -193,55 +194,9 @@ plt.savefig('celeba_loss.png')
 torch.save(model.state_dict(), 'vae.torch')
 
 
-# def compare(x):
-#     recon_x, _, _ = model(x)
-#     return torch.cat([x, recon_x])
+recon_images, _, _ = model(fixed_x.cuda())
+comparison = torch.cat([fixed_x[:],recon_images[:]])
+save_image(comparison.data.cpu(),
+                         './reconstructed_celeba/reconstruction_last' + str(epoch) + '.png', nrow=n)
 
-
-# def compare2(x):
-#     recon_x, _, _ = model(x)
-#     return recon_x
-
-
-# # In[186]:
-
-
-# # sample = torch.randn(bs, 1024)
-# # compare_x = vae.decoder(sample)
-
-# # fixed_x, _ = next(iter(dataloader))
-# # fixed_x = fixed_x[:8]
-# import pdb
-# real_img = dataset[randint(1, 150)][0].unsqueeze(0)
-
-# compare_x = compare2(real_img)
-# for i in range(31):
-    
-#     fixed_x = dataset[randint(1, 150)][0].unsqueeze(0)
-# #     pdb.set_trace()
-#     real_img = torch.cat([real_img, fixed_x])
-
-#     new_compare_x = compare2(fixed_x)
-    
-#     compare_x = torch.cat([compare_x, new_compare_x])
-    
-    
-    
-
-# save_image(compare_x.data.cpu(), 'fake_image.png')
-# save_image(real_img.data.cpu(), 'real_image.png')
-# print("Generated Images ")
-# display(Image('fake_image.png', width=700, unconfined=True))
-# print("Real Images ")
-# display(Image('real_image.png', width=700, unconfined=True))
-
-
-# # In[187]:
-
-
-# fixed_x = dataset[randint(2, 180)][0].unsqueeze(0)
-# compare_x = compare(fixed_x)
-
-# save_image(compare_x.data.cpu(), 'sample_image.png')
-# display(Image('sample_image.png', width=700, unconfined=True))
 
