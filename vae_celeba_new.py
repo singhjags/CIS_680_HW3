@@ -159,7 +159,7 @@ def loss_fn(recon_x, x, mu, log_sig):
 
     return recon_loss + KL_loss, recon_loss, KL_loss
 
-epochs = 1
+epochs = 20
 
 
 itera = 0
