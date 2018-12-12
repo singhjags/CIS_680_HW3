@@ -186,8 +186,10 @@ for epoch in range(epochs):
 
 
 plt.plot(loss_all)
-plt.imshow()
-plt.savefig('loss_plot.png')
+plt.xlabel('Iterations')
+plt.ylabel('Loss')
+plt.title('Loss Vs Iteration for CELEBA dataset')
+plt.savefig('celeba_loss.png')
 torch.save(model.state_dict(), 'vae.torch')
 
 
