@@ -181,7 +181,7 @@ for epoch in range(epochs):
             comparison = torch.cat([images.cuda()[:n],
                                           recon_images[:n]])
             save_image(comparison.data.cpu(),
-                         './reconstructed/reconstruction_' + str(epoch) + '.png', nrow=n)
+                         './reconstructed_celeba/reconstruction_' + str(epoch) + '.png', nrow=n)
         print("Epoch[{}/{}] Loss: {:.3f} {:.3f} {:.3f}".format(epoch+1, 
                                 epochs, loss.data[0]/bs, recon_loss.data[0]/bs, kl_div_loss.data[0]/bs))
 
@@ -192,11 +192,5 @@ plt.ylabel('Loss')
 plt.title('Loss Vs Iteration for CELEBA dataset')
 plt.savefig('celeba_loss.png')
 torch.save(model.state_dict(), 'vae.torch')
-
-
-recon_images, _, _ = model(fixed_x)
-comparison = torch.cat([fixed_x[:],recon_images[:]])
-save_image(comparison.data.cpu(),
-                         './reconstructed_celeba/reconstruction_last' + str(epoch) + '.png', nrow=n)
 
 
