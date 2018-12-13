@@ -133,6 +133,13 @@ class VAE(nn.Module):
         z = self.fc3(z)
         z = self.decoder(z)
         return z, mu, log_sig
+    
+    def decode_random(self):
+        z = torch.randn([32,64]).cuda()
+        z = self.fc3(z)
+        z = self.decoder(z)
+        return z
+        
 
 
 
@@ -159,7 +166,7 @@ def loss_fn(recon_x, x, mu, log_sig):
 
     return recon_loss + KL_loss, recon_loss, KL_loss
 
-epochs = 20
+epochs = 1
 
 
 itera = 0
@@ -182,6 +189,10 @@ for epoch in range(epochs):
                                           recon_images[:n]])
             save_image(comparison.data.cpu(),
                          './reconstructed_celeba/reconstruction_' + str(epoch) + '.png', nrow=n)
+            random_out_img = model.decode_random()
+            
+            save_image(random_out_img.data.cpu(),
+                         './reconstructed_celeba/random_' + str(epoch) + '.png', nrow=n)
         print("Epoch[{}/{}] Loss: {:.3f} {:.3f} {:.3f}".format(epoch+1, 
                                 epochs, loss.data[0]/bs, recon_loss.data[0]/bs, kl_div_loss.data[0]/bs))
 
