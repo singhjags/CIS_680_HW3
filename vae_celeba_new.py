@@ -159,9 +159,6 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.0002)
 def loss_fn(recon_x, x, mu, log_sig):
     recon_loss = F.binary_cross_entropy(recon_x, x, size_average=False)
     # recon_loss = F.mse_loss(recon_x, x, size_average=False)
-
-    
-    # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
     KL_loss = -0.5 * torch.mean(1 + log_sig - mu.pow(2) - log_sig.exp())
 
     return recon_loss + KL_loss, recon_loss, KL_loss
@@ -184,7 +181,7 @@ for epoch in range(epochs):
 
         
         
-        if itera%1 == 0:
+        if itera%1000 == 0:
             n = min(images.size(0), 16)
             fixed_out,_,_ = model(fixed_x.cuda())
             fixed_x_new = fixed_x.cuda()
