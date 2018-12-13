@@ -184,7 +184,7 @@ for epoch in range(epochs):
 
         
         
-        if itera%1000 == 0:
+        if itera%1 == 0:
             n = min(images.size(0), 16)
             fixed_out,_,_ = model(fixed_x.cuda())
             fixed_x_new = fixed_x.cuda()
