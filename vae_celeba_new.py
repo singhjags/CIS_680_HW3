@@ -176,7 +176,8 @@ for epoch in range(epochs):
         itera+=1
         recon_images, mu, log_sig = model(images.cuda())
         loss, recon_loss, kl_div_loss = loss_fn(recon_images, images.cuda(), mu, log_sig)
-        loss_all.append(loss.data[0]/bs)
+        batch_s = images.size(0)
+        loss_all.append(loss.data[0]/batch_s)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
