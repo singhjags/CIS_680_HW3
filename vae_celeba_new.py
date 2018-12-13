@@ -166,7 +166,7 @@ def loss_fn(recon_x, x, mu, log_sig):
 
     return recon_loss + KL_loss, recon_loss, KL_loss
 
-epochs = 1
+epochs = 20
 
 
 itera = 0
@@ -192,7 +192,7 @@ for epoch in range(epochs):
             random_out_img = model.decode_random()
             
             save_image(random_out_img.data.cpu(),
-                         './reconstructed_celeba/random_' + str(epoch) + '.png', nrow=n)
+                         './reconstructed_celeba_rand/random_' + str(epoch) + '.png', nrow=n)
         print("Epoch[{}/{}] Loss: {:.3f} {:.3f} {:.3f}".format(epoch+1, 
                                 epochs, loss.data[0]/bs, recon_loss.data[0]/bs, kl_div_loss.data[0]/bs))
 
