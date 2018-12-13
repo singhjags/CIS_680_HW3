@@ -186,9 +186,14 @@ for epoch in range(epochs):
         
         if itera%1000 == 0:
             n = min(images.size(0), 16)
+            fixed_out,_,_ = model(fixed_x.cuda())
+            fixed_x_new = fixed_x.cuda()
+            comp = torch.cat([fixed_x_new[:n],fixed_out[:n]])
             comparison = torch.cat([images.cuda()[:n],
                                           recon_images[:n]])
-            save_image(comparison.data.cpu(),
+#            save_image(comparison.data.cpu(),
+#                         './reconstructed_celeba/reconstruction_' + str(epoch) + '.png', nrow=n)
+            save_image(comp.data.cpu(),
                          './reconstructed_celeba/reconstruction_' + str(epoch) + '.png', nrow=n)
             random_out_img = model.decode_random()
             
